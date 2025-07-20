@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pop Culture Films</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #444;
+            padding: 1em;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .film-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2em;
+            padding: 2em;
+        }
+        .film {
+            background: #333;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            width: 300px;
+            padding: 1em;
+            transition: transform 0.2s;
+        }
+        .film:hover {
+            transform: scale(1.05);
+        }
+        .film img {
+            width: 100%;
+            border-radius: 4px;
+        }
+        .film-title {
+            font-size: 1.2em;
+            margin: 0.5em 0 0.2em 0;
+        }
+        .film-year {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        @media (max-width: 600px) {
+            .film-list {
+                flex-direction: column;
+                align-items: center;
+                gap: 1em;
+                padding: 1em;
+            }
+            .film {
+                width: 90vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Top Pop Culture Films</h1>
+        <p>A selection of films that shaped pop culture</p>
+    </header>
+    <section class="film-list">
+        <div class="film">
+            <img src="https://upload.wikimedia.org/wikipedia/en/8/81/Star_Wars_The_Force_Awakens_Theatrical_Poster.jpg" alt="Star Wars">
+            <div class="film-title">Star Wars: The Force Awakens</div>
+            <div class="film-year">2015</div>
+        </div>
+        <div class="film">
+            <img src="https://upload.wikimedia.org/wikipedia/en/7/7e/Inception_ver3.jpg" alt="Inception">
+            <div class="film-title">Inception</div>
+            <div class="film-year">2010</div>
+        </div>
+        <div class="film">
+            <img src="https://upload.wikimedia.org/wikipedia/en/6/6c/Avengers_Endgame_poster.jpg" alt="Avengers: Endgame">
+            <div class="film-title">Avengers: Endgame</div>
+            <div class="film-year">2019</div>
+        </div>
+        <div class="film">
+            <img src="https://upload.wikimedia.org/wikipedia/en/4/44/Jurassic_Park_poster.jpg" alt="Jurassic Park">
+            <div class="film-title">Jurassic Park</div>
+            <div class="film-year">1993</div>
+        </div>
+        <div class="film">
+            <img src="https://upload.wikimedia.org/wikipedia/en/2/2e/The_Matrix_Poster.jpg" alt="The Matrix">
+            <div class="film-title">The Matrix</div>
+            <div class="film-year">1999</div>
+        </div>
+    </section>
+</body>
+</html>
