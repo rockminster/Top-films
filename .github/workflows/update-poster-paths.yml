@@ -1,0 +1,35 @@
+name: Update Poster Paths
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 1 * *' # Monthly, 3am UTC on the 1st day of the month
+
+jobs:
+  update-poster-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install node-fetch@2
+
+      - name: Update posterPaths.js
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          node .github/scripts/updatePosterPaths.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add docs/posterPaths.js
+          git commit -m "Update posterPaths.js with latest TMDb poster paths" || echo "No changes to commit"
+          git push
