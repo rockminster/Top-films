@@ -22,6 +22,12 @@ jobs:
         run: |
           npm install node-fetch@2
 
+      - name: Test TMDB API Key
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          node .github/scripts/testTmdbApi.js
+
       - name: Update posterPaths.js
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}

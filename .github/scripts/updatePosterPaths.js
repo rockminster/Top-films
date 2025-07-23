@@ -169,26 +169,131 @@ const titles = [
 const outputPath = path.join(__dirname, '../../docs/posterPaths.js');
 const apiKey = process.env.TMDB_API_KEY;
 
-async function getPosterPath(title) {
-  const yearMatch = title.match(/\((\d{4})\)$/);
-  const year = yearMatch ? yearMatch[1] : '';
-  const query = encodeURIComponent(title.replace(/ \(\d{4}\)$/, ''));
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&year=${year}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.results && data.results[0] && data.results[0].poster_path) {
-    return data.results[0].poster_path;
+if (!apiKey) {
+  console.error('ERROR: TMDB_API_KEY environment variable is not set!');
+  console.error('Please set the TMDB_API_KEY environment variable before running this script.');
+  process.exit(1);
+}
+
+// Load existing poster paths to preserve good data
+function loadExistingPosterPaths() {
+  try {
+    if (fs.existsSync(outputPath)) {
+      const content = fs.readFileSync(outputPath, 'utf8');
+      const match = content.match(/window\.posterPaths\s*=\s*({[\s\S]*});/);
+      if (match) {
+        return JSON.parse(match[1]);
+      }
+    }
+  } catch (error) {
+    console.log(`Could not load existing poster paths: ${error.message}`);
   }
-  return null;
+  return {};
+}
+
+async function getPosterPath(title) {
+  try {
+    const yearMatch = title.match(/\((\d{4})\)$/);
+    const year = yearMatch ? yearMatch[1] : '';
+    const query = encodeURIComponent(title.replace(/ \(\d{4}\)$/, ''));
+    const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&year=${year}`;
+    
+    console.log(`Fetching: ${title} (${year})...`);
+    const res = await fetch(url);
+    
+    if (!res.ok) {
+      console.error(`HTTP Error ${res.status} for ${title}: ${res.statusText}`);
+      return null;
+    }
+    
+    const data = await res.json();
+    
+    if (data.success === false) {
+      console.error(`API Error for ${title}: ${data.status_message}`);
+      return null;
+    }
+    
+    if (data.results && data.results.length > 0 && data.results[0].poster_path) {
+      console.log(`✓ Found poster for ${title}: ${data.results[0].poster_path}`);
+      return data.results[0].poster_path;
+    } else {
+      console.log(`✗ No poster found for ${title}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error fetching ${title}: ${error.message}`);
+    return null;
+  }
 }
 
 (async () => {
-  const posterPaths = {};
-  for (const title of titles) {
+  console.log(`Starting poster path update for ${titles.length} films...`);
+  console.log(`Using API key: ${apiKey.substring(0, 8)}...`);
+  
+  // Load existing poster paths
+  const existingPosterPaths = loadExistingPosterPaths();
+  console.log(`Loaded ${Object.keys(existingPosterPaths).length} existing poster paths`);
+  
+  const posterPaths = { ...existingPosterPaths }; // Start with existing data
+  let successCount = 0;
+  let failureCount = 0;
+  let skippedCount = 0;
+  let apiCallCount = 0;
+  
+  for (let i = 0; i < titles.length; i++) {
+    const title = titles[i];
+    console.log(`[${i + 1}/${titles.length}] Processing: ${title}`);
+    
+    // Skip if we already have a valid poster path
+    if (posterPaths[title] && posterPaths[title] !== null) {
+      console.log(`  → Skipping (already have poster path: ${posterPaths[title]})`);
+      skippedCount++;
+      continue;
+    }
+    
+    apiCallCount++;
     const posterPath = await getPosterPath(title);
     posterPaths[title] = posterPath;
-    console.log(`${title}: ${posterPath}`);
+    
+    if (posterPath) {
+      successCount++;
+    } else {
+      failureCount++;
+    }
+    
+    // Add a small delay to be respectful to the API
+    if (i < titles.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
   }
+  
+  console.log(`\nSummary:`);
+  console.log(`  API calls made: ${apiCallCount}`);
+  console.log(`  New posters found: ${successCount}`);
+  console.log(`  Failed to find: ${failureCount}`);
+  console.log(`  Skipped (already had): ${skippedCount}`);
+  console.log(`  Total entries: ${Object.keys(posterPaths).length}`);
+  
+  // Only proceed if we have at least some successful results
+  const validPosterCount = Object.values(posterPaths).filter(path => path !== null).length;
+  console.log(`  Valid poster paths: ${validPosterCount}`);
+  
+  if (validPosterCount === 0 && apiCallCount > 0) {
+    console.error('\n❌ No valid poster paths found! This suggests an API issue.');
+    console.error('Not updating the file to avoid losing existing data.');
+    process.exit(1);
+  }
+  
   const jsContent = `// Film poster path references for Top-films\n// Format: { \"Film Title (Year)\": \"/posterPath.jpg\" }\nwindow.posterPaths = ${JSON.stringify(posterPaths, null, 2)};\n`;
-  fs.writeFileSync(outputPath, jsContent);
-})();
+  
+  try {
+    fs.writeFileSync(outputPath, jsContent);
+    console.log(`✓ Successfully wrote posterPaths.js with ${Object.keys(posterPaths).length} entries`);
+  } catch (error) {
+    console.error(`✗ Error writing file: ${error.message}`);
+    process.exit(1);
+  }
+})().catch(error => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
