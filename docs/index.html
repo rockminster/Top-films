@@ -255,7 +255,14 @@ const tableRows = [
 ];
 
 function getPosterUrl(title) {
-  const posterPath = window.posterPaths && window.posterPaths[title];
+  // Normalize quotes to handle curly vs straight quote mismatches
+  const normalizedTitle = title
+    .replace(/'/g, "'")  // curly apostrophe to straight
+    .replace(/'/g, "'")  // curly left quote to straight
+    .replace(/"/g, '"')  // curly left quote to straight
+    .replace(/"/g, '"'); // curly right quote to straight
+    
+  const posterPath = window.posterPaths && window.posterPaths[normalizedTitle];
   return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : 'https://via.placeholder.com/56x84?text=No+Image';
 }
 

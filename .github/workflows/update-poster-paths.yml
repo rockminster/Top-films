@@ -13,6 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check TMDb credentials
+        run: |
+          if [[ -z "${{ secrets.TMDB_API_KEY }}" && -z "${{ secrets.TMDB_BEARER_TOKEN }}" ]]; then
+            echo "ERROR: Neither TMDB_API_KEY nor TMDB_BEARER_TOKEN is configured in repository secrets."
+            echo "Please add one of these secrets to the repository settings."
+            exit 1
+          elif [[ -n "${{ secrets.TMDB_API_KEY }}" ]]; then
+            echo "✓ TMDB_API_KEY is configured (v3 authentication)"
+          elif [[ -n "${{ secrets.TMDB_BEARER_TOKEN }}" ]]; then
+            echo "✓ TMDB_BEARER_TOKEN is configured (v4 authentication)"
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,6 +37,7 @@ jobs:
       - name: Update posterPaths.js
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          TMDB_BEARER_TOKEN: ${{ secrets.TMDB_BEARER_TOKEN }}
         run: |
           node .github/scripts/updatePosterPaths.js
 

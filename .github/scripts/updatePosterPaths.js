@@ -1,6 +1,6 @@
 // updatePosterPaths.js
 // This script updates docs/posterPaths.js with the latest TMDb poster paths for each film title.
-// Requires TMDB_API_KEY in environment variables.
+// Requires either TMDB_API_KEY (v3) or TMDB_BEARER_TOKEN (v4) in environment variables.
 
 const fetch = require('node-fetch');
 const fs = require('fs');
@@ -168,27 +168,87 @@ const titles = [
 
 const outputPath = path.join(__dirname, '../../docs/posterPaths.js');
 const apiKey = process.env.TMDB_API_KEY;
+const bearerToken = process.env.TMDB_BEARER_TOKEN;
+
+// Validate credentials
+if (!apiKey && !bearerToken) {
+  console.error('ERROR: Neither TMDB_API_KEY nor TMDB_BEARER_TOKEN is set in environment variables.');
+  console.error('Please provide one of these credentials to access TMDb API.');
+  process.exit(1);
+}
 
 async function getPosterPath(title) {
   const yearMatch = title.match(/\((\d{4})\)$/);
   const year = yearMatch ? yearMatch[1] : '';
   const query = encodeURIComponent(title.replace(/ \(\d{4}\)$/, ''));
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&year=${year}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.results && data.results[0] && data.results[0].poster_path) {
-    return data.results[0].poster_path;
+  
+  let url, headers;
+  
+  if (bearerToken) {
+    // Use v4 Bearer token authentication
+    url = `https://api.themoviedb.org/3/search/movie?query=${query}&year=${year}`;
+    headers = {
+      'Authorization': `Bearer ${bearerToken}`,
+      'Content-Type': 'application/json'
+    };
+  } else {
+    // Use v3 API key authentication
+    url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&year=${year}`;
+    headers = {};
   }
-  return null;
+  
+  try {
+    const res = await fetch(url, { headers });
+    
+    if (!res.ok) {
+      console.error(`ERROR: TMDb API request failed for "${title}": ${res.status} ${res.statusText}`);
+      return null;
+    }
+    
+    const data = await res.json();
+    
+    if (data.results && data.results[0] && data.results[0].poster_path) {
+      return data.results[0].poster_path;
+    }
+    
+    console.warn(`WARNING: No poster found for "${title}"`);
+    return null;
+  } catch (error) {
+    console.error(`ERROR: Failed to fetch poster for "${title}": ${error.message}`);
+    return null;
+  }
 }
 
 (async () => {
+  console.log('Starting TMDb poster path update...');
+  console.log(`Using ${bearerToken ? 'Bearer token (v4)' : 'API key (v3)'} authentication`);
+  
   const posterPaths = {};
+  let successCount = 0;
+  let failureCount = 0;
+  
   for (const title of titles) {
     const posterPath = await getPosterPath(title);
     posterPaths[title] = posterPath;
-    console.log(`${title}: ${posterPath}`);
+    
+    if (posterPath) {
+      console.log(`✓ ${title}: ${posterPath}`);
+      successCount++;
+    } else {
+      console.log(`✗ ${title}: No poster found`);
+      failureCount++;
+    }
   }
+  
+  console.log(`\nResults: ${successCount} successful, ${failureCount} failed`);
+  
   const jsContent = `// Film poster path references for Top-films\n// Format: { \"Film Title (Year)\": \"/posterPath.jpg\" }\nwindow.posterPaths = ${JSON.stringify(posterPaths, null, 2)};\n`;
-  fs.writeFileSync(outputPath, jsContent);
+  
+  try {
+    fs.writeFileSync(outputPath, jsContent);
+    console.log(`\nSuccessfully updated ${outputPath}`);
+  } catch (error) {
+    console.error(`ERROR: Failed to write poster paths file: ${error.message}`);
+    process.exit(1);
+  }
 })();
