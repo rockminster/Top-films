@@ -168,27 +168,114 @@ const titles = [
 
 const outputPath = path.join(__dirname, '../../docs/posterPaths.js');
 const apiKey = process.env.TMDB_API_KEY;
+const bearerToken = process.env.TMDB_BEARER_TOKEN;
+
+// Validate credentials on startup
+function validateCredentials() {
+  if (!apiKey && !bearerToken) {
+    console.error('❌ ERROR: Neither TMDB_API_KEY nor TMDB_BEARER_TOKEN environment variable is set.');
+    console.error('Please set one of the following:');
+    console.error('  - TMDB_API_KEY for TMDb v3 API access');
+    console.error('  - TMDB_BEARER_TOKEN for TMDb v4 API access');
+    process.exit(1);
+  }
+  
+  if (apiKey && bearerToken) {
+    console.log('ℹ️  Both TMDB_API_KEY and TMDB_BEARER_TOKEN are set. Using v4 Bearer token for authentication.');
+  } else if (bearerToken) {
+    console.log('ℹ️  Using TMDb v4 API with Bearer token authentication.');
+  } else {
+    console.log('ℹ️  Using TMDb v3 API with API key authentication.');
+  }
+}
+
+// Normalize title to handle curly quotes and other variations
+function normalizeTitle(title) {
+  return title
+    .replace(/'/g, "'")  // Replace curly apostrophes with straight ones
+    .replace(/"/g, '"')  // Replace curly quotes with straight ones
+    .replace(/–/g, '-')  // Replace en-dash with hyphen
+    .replace(/—/g, '-'); // Replace em-dash with hyphen
+}
 
 async function getPosterPath(title) {
   const yearMatch = title.match(/\((\d{4})\)$/);
   const year = yearMatch ? yearMatch[1] : '';
   const query = encodeURIComponent(title.replace(/ \(\d{4}\)$/, ''));
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&year=${year}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.results && data.results[0] && data.results[0].poster_path) {
-    return data.results[0].poster_path;
+  
+  // Build URL and headers based on available credentials
+  let url, headers;
+  if (bearerToken) {
+    // Use v4 API with Bearer token
+    url = `https://api.themoviedb.org/3/search/movie?query=${query}&year=${year}`;
+    headers = {
+      'Authorization': `Bearer ${bearerToken}`,
+      'Content-Type': 'application/json'
+    };
+  } else {
+    // Use v3 API with API key
+    url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&year=${year}`;
+    headers = {};
   }
-  return null;
+  
+  try {
+    const res = await fetch(url, { headers });
+    
+    if (!res.ok) {
+      console.error(`❌ API request failed for "${title}": ${res.status} ${res.statusText}`);
+      if (res.status === 401) {
+        console.error('   This indicates an authentication problem. Please check your API credentials.');
+        process.exit(1);
+      }
+      return null;
+    }
+    
+    const data = await res.json();
+    
+    if (data.success === false) {
+      console.error(`❌ API error for "${title}": ${data.status_message}`);
+      return null;
+    }
+    
+    if (data.results && data.results[0] && data.results[0].poster_path) {
+      return data.results[0].poster_path;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Network/fetch error for "${title}": ${error.message}`);
+    return null;
+  }
 }
 
 (async () => {
+  // Validate credentials before starting
+  validateCredentials();
+  
+  console.log('🚀 Starting poster path update for', titles.length, 'films...');
+  
   const posterPaths = {};
+  let successCount = 0;
+  let failureCount = 0;
+  
   for (const title of titles) {
     const posterPath = await getPosterPath(title);
-    posterPaths[title] = posterPath;
-    console.log(`${title}: ${posterPath}`);
+    const normalizedTitle = normalizeTitle(title);
+    posterPaths[normalizedTitle] = posterPath;
+    
+    if (posterPath) {
+      successCount++;
+      console.log(`✅ ${title}: ${posterPath}`);
+    } else {
+      failureCount++;
+      console.log(`❌ ${title}: No poster found`);
+    }
   }
+  
+  console.log(`\n📊 Summary: ${successCount} successful, ${failureCount} failed out of ${titles.length} total`);
+  
   const jsContent = `// Film poster path references for Top-films\n// Format: { \"Film Title (Year)\": \"/posterPath.jpg\" }\nwindow.posterPaths = ${JSON.stringify(posterPaths, null, 2)};\n`;
   fs.writeFileSync(outputPath, jsContent);
+  
+  console.log(`✅ Updated ${outputPath}`);
 })();
