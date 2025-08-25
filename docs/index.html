@@ -255,9 +255,26 @@ const tableRows = [
 ];
 
 function getPosterUrl(title) {
-  const normalizedTitle = title.replace(/’/g, "'");
-  const posterPath = window.posterPaths && window.posterPaths[normalizedTitle];
-  return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : 'https://via.placeholder.com/56x84?text=No+Image';
+  // Comprehensive title normalization to handle various character encodings
+  const normalizedTitle = title
+    .replace(/'/g, "'")           // Convert fancy apostrophes to regular ones
+    .replace(/'/g, "'")           // Convert another type of fancy apostrophe
+    .replace(/"/g, '"')           // Convert fancy quotes to regular ones
+    .replace(/"/g, '"')           // Convert another type of fancy quote
+    .replace(/–/g, "-")           // Convert en-dash to regular dash
+    .replace(/—/g, "-")           // Convert em-dash to regular dash
+    .normalize("NFD")             // Normalize unicode characters
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .trim();                      // Remove leading/trailing whitespace
+  
+  if (!window.posterPaths) {
+    return "https://via.placeholder.com/56x84?text=No+Image";
+  }
+  
+  // Try normalized title first, then original title as fallback
+  const posterPath = window.posterPaths[normalizedTitle] || window.posterPaths[title];
+  
+  return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : "https://via.placeholder.com/56x84?text=No+Image";
 }
 
 function renderTable(rows) {
