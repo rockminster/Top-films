@@ -79,7 +79,7 @@ Always reference these instructions first and fallback to search or bash command
 ## Common Development Tasks
 
 ### Making Content Changes
-- Edit film data directly in `docs/index.html` in the `tableRows` array (starts ~line 100)
+- Edit film data directly in `docs/index.html` in the `tableRows` array (search for `tableRows` in the file)
 - Update styling by modifying the `<style>` section in `docs/index.html`
 - Test changes locally before committing: `cd docs && python3 -m http.server 8000`
 
