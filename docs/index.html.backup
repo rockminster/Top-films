@@ -255,17 +255,9 @@ const tableRows = [
 ];
 
 function getPosterUrl(title) {
-  if (!window.posterPaths) {
-    return "https://via.placeholder.com/56x84?text=No+Image";
-  }
-  
-  // Simple normalization: convert fancy apostrophes to regular ones
-  const normalizedTitle = title.replace(/['']/g, "'");
-  
-  // Try normalized title first, then original title as fallback
-  const posterPath = window.posterPaths[normalizedTitle] || window.posterPaths[title];
-  
-  return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : "https://via.placeholder.com/56x84?text=No+Image";
+  const normalizedTitle = title.replace(/'/g, "'");
+  const posterPath = window.posterPaths && window.posterPaths[normalizedTitle];
+  return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : 'https://via.placeholder.com/56x84?text=No+Image';
 }
 
 function renderTable(rows) {
