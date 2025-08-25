@@ -255,12 +255,21 @@ const tableRows = [
 ];
 
 function getPosterUrl(title) {
+  // Comprehensive title normalization to handle various character encodings
+  const charMap = {
+    "’": "'", "‘": "'", "'": "'", // fancy and regular apostrophes
+    "“": '"', "”": '"', '"': '"', // fancy and regular quotes
+    "–": "-", "—": "-",           // en-dash and em-dash
+  };
+  const normalizedTitle = title
+    .replace(/[’‘'“”"–—]/g, c => charMap[c] || c) // Consolidated replacement
+    .normalize("NFD")             // Normalize unicode characters
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .trim();                      // Remove leading/trailing whitespace
+  
   if (!window.posterPaths) {
     return "https://via.placeholder.com/56x84?text=No+Image";
   }
-  
-  // Simple normalization: convert fancy apostrophes to regular ones
-  const normalizedTitle = title.replace(/['']/g, "'");
   
   // Try normalized title first, then original title as fallback
   const posterPath = window.posterPaths[normalizedTitle] || window.posterPaths[title];
