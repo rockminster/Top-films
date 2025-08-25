@@ -256,13 +256,13 @@ const tableRows = [
 
 function getPosterUrl(title) {
   // Comprehensive title normalization to handle various character encodings
+  const charMap = {
+    "’": "'", "‘": "'", "'": "'", // fancy and regular apostrophes
+    "“": '"', "”": '"', '"': '"', // fancy and regular quotes
+    "–": "-", "—": "-",           // en-dash and em-dash
+  };
   const normalizedTitle = title
-    .replace(/'/g, "'")           // Convert fancy apostrophes to regular ones
-    .replace(/'/g, "'")           // Convert another type of fancy apostrophe
-    .replace(/"/g, '"')           // Convert fancy quotes to regular ones
-    .replace(/"/g, '"')           // Convert another type of fancy quote
-    .replace(/–/g, "-")           // Convert en-dash to regular dash
-    .replace(/—/g, "-")           // Convert em-dash to regular dash
+    .replace(/[’‘'“”"–—]/g, c => charMap[c] || c) // Consolidated replacement
     .normalize("NFD")             // Normalize unicode characters
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
     .trim();                      // Remove leading/trailing whitespace
