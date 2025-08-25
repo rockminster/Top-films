@@ -255,7 +255,8 @@ const tableRows = [
 ];
 
 function getPosterUrl(title) {
-  const posterPath = window.posterPaths && window.posterPaths[title];
+  const normalizedTitle = title.replace(/'/g, "'");
+  const posterPath = window.posterPaths && window.posterPaths[normalizedTitle];
   return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : 'https://via.placeholder.com/56x84?text=No+Image';
 }
 
