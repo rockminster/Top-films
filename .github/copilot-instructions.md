@@ -8,7 +8,7 @@ Always reference these instructions first and fallback to search or bash command
 
 ### Quick Start - Local Development
 - Set up local development environment:
-  - `cd /home/runner/work/Top-films/Top-films/docs`
+  - `cd docs`
   - `python3 -m http.server 8000` - starts development server instantly
   - Open http://localhost:8000 to view the site
   - NEVER CANCEL: Server runs indefinitely until manually stopped
