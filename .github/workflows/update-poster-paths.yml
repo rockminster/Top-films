@@ -32,7 +32,7 @@ jobs:
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
-          curl --fail --silent --show-error "https://api.themoviedb.org/3/configuration?api_key=$TMDB_API_KEY" > /dev/null
+          curl --fail --silent --show-error -H "Authorization: Bearer $TMDB_API_KEY" "https://api.themoviedb.org/3/configuration" > /dev/null
           echo "Successfully connected to TMDb API."
 
       - name: Install dependencies
