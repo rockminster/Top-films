@@ -18,6 +18,23 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Validate TMDB API Key
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          if [ -z "$TMDB_API_KEY" ]; then
+            echo "Error: TMDB_API_KEY secret is not set or empty."
+            exit 1
+          fi
+          echo "TMDB_API_KEY secret is present."
+
+      - name: Test TMDb API Connectivity
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          curl --fail --silent --show-error "https://api.themoviedb.org/3/configuration?api_key=$TMDB_API_KEY" > /dev/null
+          echo "Successfully connected to TMDb API."
+
       - name: Install dependencies
         run: |
           npm install node-fetch@2
