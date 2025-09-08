@@ -18,15 +18,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Validate TMDB API Key
+      - name: Validate TMDb API key
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           if [ -z "$TMDB_API_KEY" ]; then
-            echo "Error: TMDB_API_KEY secret is not set or empty."
+            echo "Error: TMDb API key secret is not set or empty."
             exit 1
           fi
-          echo "TMDB_API_KEY secret is present."
+          echo "TMDb API key secret is present."
 
       - name: Test TMDb API Connectivity
         env:
@@ -37,9 +37,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install node-fetch@2
+          npm ci
 
-      - name: Test TMDB API Key
+      - name: Test TMDb API key
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
