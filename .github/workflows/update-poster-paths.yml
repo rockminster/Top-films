@@ -23,16 +23,16 @@ jobs:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           if [ -z "$TMDB_API_KEY" ]; then
-            echo "Error: TMDB_API_KEY secret is not set or empty."
+            echo "Error: TMDb API key secret is not set or empty."
             exit 1
           fi
-          echo "TMDB_API_KEY secret is present."
+          echo "TMDb API key secret is present."
 
       - name: Test TMDb API Connectivity
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
-          curl --fail --silent --show-error "https://api.themoviedb.org/3/configuration?api_key=$TMDB_API_KEY" > /dev/null
+          curl --fail --silent --show-error -H "Authorization: Bearer $TMDB_API_KEY" "https://api.themoviedb.org/3/configuration" > /dev/null
           echo "Successfully connected to TMDb API."
 
       - name: Install dependencies
