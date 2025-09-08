@@ -265,12 +265,23 @@ function getPosterUrl(title) {
   // Try normalized title first, then original title as fallback
   const posterPath = window.posterPaths[normalizedTitle] || window.posterPaths[title];
   
-  return posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : "https://via.placeholder.com/56x84?text=No+Image";
+  // Use TMDB's image CDN; fall back to a placeholder if unavailable
+  return posterPath
+    ? `https://media.themoviedb.org/t/p/w92${posterPath}`
+    : "https://via.placeholder.com/56x84?text=No+Image";
 }
 
 function renderTable(rows) {
   const tbody = document.getElementById('table-body');
-  tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><img src="${getPosterUrl(r[2])}" alt="${r[2]}" loading="lazy" /></td><td>${r[3]}</td></tr>`).join('');
+  // Each poster falls back to a placeholder if the image fails to load
+  tbody.innerHTML = rows
+    .map(
+      r =>
+        `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><img src="${getPosterUrl(
+          r[2]
+        )}" alt="${r[2]}" loading="lazy" onerror="this.src='https://via.placeholder.com/56x84?text=No+Image'" referrerpolicy="no-referrer" /></td><td>${r[3]}</td></tr>`
+    )
+    .join('');
 }
 
 function reorderTable() {
