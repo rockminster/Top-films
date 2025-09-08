@@ -279,9 +279,19 @@ function renderTable(rows) {
       r =>
         `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><img src="${getPosterUrl(
           r[2]
-        )}" alt="${r[2]}" loading="lazy" onerror="this.src='https://via.placeholder.com/56x84?text=No+Image'" referrerpolicy="no-referrer" /></td><td>${r[3]}</td></tr>`
+        )}" alt="${r[2]}" loading="lazy" referrerpolicy="no-referrer" /></td><td>${r[3]}</td></tr>`
     )
     .join('');
+
+  // Add error event listeners to all images for fallback
+  const fallbackUrl = "https://via.placeholder.com/56x84?text=No+Image";
+  tbody.querySelectorAll('img').forEach(img => {
+    img.addEventListener('error', function() {
+      if (this.src !== fallbackUrl) {
+        this.src = fallbackUrl;
+      }
+    });
+  });
 }
 
 function reorderTable() {
