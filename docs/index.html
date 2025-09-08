@@ -276,15 +276,23 @@ function createPosterImage(title) {
   return `<img src="${src}" alt="${title}" loading="lazy" referrerpolicy="no-referrer" />`;
 }
 
+function createTableRow(rowData) {
+  const [decade, genre, title, watchLink] = rowData;
+  const posterImage = createPosterImage(title);
+  
+  return `<tr>
+    <td>${decade}</td>
+    <td>${genre}</td>
+    <td>${title}</td>
+    <td>${posterImage}</td>
+    <td>${watchLink}</td>
+  </tr>`;
+}
+
 function renderTable(rows) {
   const tbody = document.getElementById('table-body');
   // Each poster falls back to a placeholder if the image fails to load
-  tbody.innerHTML = rows
-    .map(
-      r =>
-        `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${createPosterImage(r[2])}</td><td>${r[3]}</td></tr>`
-    )
-    .join('');
+  tbody.innerHTML = rows.map(createTableRow).join('');
 
   // Add error event listeners to all images for fallback
   const fallbackUrl = "https://via.placeholder.com/56x84?text=No+Image";
