@@ -271,15 +271,18 @@ function getPosterUrl(title) {
     : "https://via.placeholder.com/56x84?text=No+Image";
 }
 
+function createPosterImage(title) {
+  const src = getPosterUrl(title);
+  return `<img src="${src}" alt="${title}" loading="lazy" referrerpolicy="no-referrer" />`;
+}
+
 function renderTable(rows) {
   const tbody = document.getElementById('table-body');
   // Each poster falls back to a placeholder if the image fails to load
   tbody.innerHTML = rows
     .map(
       r =>
-        `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><img src="${getPosterUrl(
-          r[2]
-        )}" alt="${r[2]}" loading="lazy" referrerpolicy="no-referrer" /></td><td>${r[3]}</td></tr>`
+        `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${createPosterImage(r[2])}</td><td>${r[3]}</td></tr>`
     )
     .join('');
 
